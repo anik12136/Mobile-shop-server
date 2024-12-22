@@ -24,13 +24,28 @@ async function run() {
   try {
 
     const demoCourses   =  client.db("gadget-shop").collection("testData");
+    const usersCollection = client.db("gadget-shop").collection("registerUsers");
 
-
+    // test data
     app.get('/demoCourses', async (req, res) => {
         const result = await demoCourses.find().toArray();
         res.send(result);
     })
 
+    // insert user collections into database
+    //insert user into the database 
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await usersCollection.findOne(query);
+
+      if (existingUser) {
+        return res.send({ message: 'user already exists' })
+      }
+
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
