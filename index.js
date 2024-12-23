@@ -7,6 +7,9 @@ const { text } = require('express');
 app.use(cors());
 app.use(express.json());
 
+const multer = require('multer');
+const router = express.Router();
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.00oqpy6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -25,6 +28,7 @@ async function run() {
 
     const demoCourses   =  client.db("gadget-shop").collection("testData");
     const usersCollection = client.db("gadget-shop").collection("registerUsers");
+    const allProductsCollection = client.db("gadget-shop").collection("allProducts");
 
     // test data
     app.get('/demoCourses', async (req, res) => {
@@ -88,6 +92,17 @@ async function run() {
       res.send(result);
 
     })
+
+    // Add product
+    app.post('/addProduct', async (req, res) => {
+      const body = req.body;
+      console.log(body);
+      const result = await allProductsCollection.insertOne(body);
+      res.send(result);
+  });
+
+
+
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
