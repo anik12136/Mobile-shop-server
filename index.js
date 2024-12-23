@@ -26,14 +26,14 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
 
-    const demoCourses   =  client.db("gadget-shop").collection("testData");
+    const demoCourses = client.db("gadget-shop").collection("testData");
     const usersCollection = client.db("gadget-shop").collection("registerUsers");
     const allProductsCollection = client.db("gadget-shop").collection("allProducts");
 
     // test data
     app.get('/demoCourses', async (req, res) => {
-        const result = await demoCourses.find().toArray();
-        res.send(result);
+      const result = await demoCourses.find().toArray();
+      res.send(result);
     })
 
     // insert user collections into database
@@ -54,8 +54,8 @@ async function run() {
       res.send(result);
     });
 
-     //user email query
-     app.get('/users/check/:email', async (req, res) => {
+    //user email query
+    app.get('/users/check/:email', async (req, res) => {
       const email = req.params.email;
       const result = await usersCollection.findOne({ email: email });
       res.send(result);
@@ -99,10 +99,41 @@ async function run() {
       console.log(body);
       const result = await allProductsCollection.insertOne(body);
       res.send(result);
+    });
+
+
+    // email filtering my products
+    app.get("/myProducts/:email", async (req, res) => {
+      console.log(req.params.email);
+      const allToy = allProductsCollection.find({ seller_email: req.params.email });
+      const result = await allToy.toArray();
+      res.send(result);
+    })
+
+    // delete
+    app.delete('/delete/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await allProductsCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    // update
+
+    app.put("/updateProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateProduct = {
+          $set: {
+              price: body.price,
+              quantity: body.quantity,
+              description: body.description,
+          },
+      };
+      const result = await allProductsCollection.updateOne(filter, updateProduct);
+      res.send(result);
   });
-
-
-
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -116,9 +147,9 @@ async function run() {
 }
 run().catch(console.dir);
 app.get('/', (req, res) => {
-    res.send('gadget shop is Running')
+  res.send('gadget shop is Running')
 })
 
 app.listen(port, () => {
-    console.log(`gadget shop API is running on port: ${port}`)
+  console.log(`gadget shop API is running on port: ${port}`)
 })
