@@ -29,6 +29,8 @@ async function run() {
     const demoCourses = client.db("gadget-shop").collection("testData");
     const usersCollection = client.db("gadget-shop").collection("registerUsers");
     const allProductsCollection = client.db("gadget-shop").collection("allProducts");
+    const bookmarks = client.db("gadget-shop").collection("bookmarks");
+    const cartCollection = client.db("gadget-shop").collection("carts");
 
     // test data
     app.get('/demoCourses', async (req, res) => {
@@ -125,15 +127,101 @@ async function run() {
       const body = req.body;
       const filter = { _id: new ObjectId(id) };
       const updateProduct = {
-          $set: {
-              price: body.price,
-              quantity: body.quantity,
-              description: body.description,
-          },
+        $set: {
+          price: body.price,
+          quantity: body.quantity,
+          description: body.description,
+        },
       };
       const result = await allProductsCollection.updateOne(filter, updateProduct);
       res.send(result);
-  });
+    });
+
+    // insert bookmarks to database from instructor
+    app.post('/bookmarks', async (req, res) => {
+      const newBookmark = req.body;
+      console.log(newBookmark);
+      const query = { idEmail: newBookmark.idEmail }
+      const existingBookmark = await bookmarks.findOne(query);
+
+      if (existingBookmark) {
+        return res.send({ message: 'Wishlist already exists' })
+      }
+      // console.log(newFormCourses);
+      else {
+        const result = await bookmarks.insertOne(newBookmark);
+        res.send(result);
+      }
+    })
+
+    // get bookmarks using useEffect
+    app.get('/bookmarks/:email', async (req, res) => {
+      const email = req.params.email;
+      const result = await bookmarks.find({ email: email }).toArray();
+      res.send(result);
+    });
+
+    // one bookmark carts api using tanstack query
+    app.get('/bookmarks', async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email }
+      const result = await bookmarks.find(query).toArray();
+      res.send(result);
+    });
+
+    // delete bookmark
+    app.delete('/bookmarks/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookmarks.deleteOne(query);
+      res.send(result);
+    })
+
+    //get Product from database
+    app.get('/allProducts', async (req, res) => {
+      const result = await allProductsCollection.find().toArray();
+      res.send(result);
+    });
+
+    // carts
+    app.post('/carts', async (req, res) => {
+      const newCart = req.body;
+      // console.log(newCart);
+      const query = { idEmail: newCart.idEmail }
+      const existingCart = await cartCollection.findOne(query);
+
+      if (existingCart) {
+        return res.send({ message: 'Cart already exists' })
+      }
+      // console.log(newFormCourses);
+      else {
+        const result = await cartCollection.insertOne(newCart);
+        res.send(result);
+      }
+    })
+
+    // One User Cart using use effect
+    app.get('/carts/:email', async (req, res) => {
+      const email = req.params.email;
+      const result = await cartCollection.find({ email: email }).toArray();
+      res.send(result);
+    });
+
+    // one user carts api using tanstack query
+    app.get('/carts', async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email }
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // cart delete
+    app.delete('/carts/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    })
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
